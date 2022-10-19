@@ -1,8 +1,9 @@
 from turtle import pd
 import pandas as pd
-import numpy as ny
 import requests
+import psycopg2 as ps
 
+'''
 API_KEY='AIzaSyBQvFKIQCnFRw7YN7U2b6c5iTzhKzrpHFs'
 url='https://www.googleapis.com/youtube/v3/search?part=snippet,id&q=Toyota&maxResults=50&order=date&pageToken=''&key='+API_KEY
 response=requests.get(url).json()
@@ -41,6 +42,56 @@ for video in response['items']:
     df=pd.concat([df,pd.DataFrame([dt], columns=['VideoId','VideoTitle', 'UploadDate','ViewCount', 'LikeCount','DislikeCount', 'FavoriteCount','CommentCount'])], ignore_index=True)
     
 df.to_csv('out.csv')
+'''
+
+
+#df1=pd.read_csv('out.csv', index_col=0)
+#for i, row in df1.iterrows():
+#    print(row['VideoTitle'])
+
+def connect_to_db(hostName, dbName, Port, UserName, Password):
+    try:
+        conn=ps.connect(host=hostName, database=dbName, port=Port, user=UserName, password=Password)
+    except ps.OperationalError as e:
+        raise e
+    else:
+        print('Connected!!')
+    
+    return conn
+
+def create_table(curr):
+    
+    create_table_command =("""CREATE TABLE IF NOT EXISTS video1(
+    video_id VARCHAR(255) PRIMARY KEY,
+    video_title TEXT NOT NULL,
+    upload_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    view_count INTEGER NOT NULL,
+    like_count INTEGER NOT NULL,
+    dislike_count INTEGER NOT NULL,
+    favorite_count INTEGER NOT NULL,
+    comment_count INTEGER NOT NULL
+    );""")
+    curr.execute(create_table_command)
+    
+                                                                
+
+
+
+                            
+
+
+
+host_name='mydatabase-instance.cmbb90ngezbh.us-east-1.rds.amazonaws.com'
+dbname='first_test_db'
+port='5432'
+username='minhphan'
+password='minhphan12345'
+conn=None
+
+conn = connect_to_db(host_name,dbname, port, username, password)
+curr=conn.cursor()
+create_table(curr)
+conn.commit()
 
 
 
