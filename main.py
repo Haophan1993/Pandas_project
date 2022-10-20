@@ -55,7 +55,7 @@ def connect_to_db(hostName, dbName, Port, UserName, Password):
     except ps.OperationalError as e:
         raise e
     else:
-        print('Connected!!')
+        print('Connected to database')
     
     return conn
 
@@ -73,13 +73,43 @@ def create_table(curr):
     );""")
     curr.execute(create_table_command)
     
-                                                                
+
+def check_exist_video(curr, video_id):
+    select_video=("""
+                    SELECT video_id FROM video1
+                    WHERE video_id=%s;""")
+
+    curr.execute(select_video, (video_id,))
+    
+    return curr.fetchone()                                                              
+
+def insert_data_to_table(curr, video_id, video_title, upload_date, view_count, like_count, dislike_count, favorite_count, comment_count):
+    insert_video =("""
+                    INSERT INTO video1 VALUES(%s, %s, %s, %s, %s, %s, %s, %s );""")
+    curr.execute(insert_video, (video_id, video_title, upload_date, view_count, like_count, dislike_count, favorite_count, comment_count,))
 
 
-
+def update_data_to_table(curr, video_title, upload_date, view_count, like_count, dislike_count, favorite_count, comment_count, video_id ):
+    
+    update_video=("""
+                    UPDATE video1
+                    SET video_title=%s,
+                        upload_date=%s,
+                        view_count=%s,
+                        like_count=%s,
+                        dislike_count=%s,
+                        favorite_count=%s,
+                        comment_count=%s
+                    WHERE video_id=%s;""")
+    curr.execute(update_video,(video_title, upload_date, view_count, like_count, dislike_count, favorite_count, comment_count, video_id,) )
                             
 
 
+
+
+
+
+df1=pd.read_csv('out.csv', index_col=0)
 
 host_name='mydatabase-instance.cmbb90ngezbh.us-east-1.rds.amazonaws.com'
 dbname='first_test_db'
@@ -91,8 +121,22 @@ conn=None
 conn = connect_to_db(host_name,dbname, port, username, password)
 curr=conn.cursor()
 create_table(curr)
-conn.commit()
 
+for i, row in df1.iterrows():
+
+    if check_exist_video(curr, row['VideoId']) =='':
+        insert_data_to_table(curr, row['VideoId'], row['VideoTitle'], row['UploadDate'], row['ViewCount'], row['LikeCount'], 
+                           row['DislikeCount'], row['FavoriteCount'], row['CommentCount'])
+    
+    else:
+        update_data_to_table(curr, row['VideoTitle'], row['UploadDate'], row['ViewCount'], row['LikeCount'], 
+                           row['DislikeCount'], row['FavoriteCount'], row['CommentCount'], row['VideoId'] )
+
+
+conn.commit()
+curr.close()
+conn.close()
+print('Connection is closed')
 
 
 
